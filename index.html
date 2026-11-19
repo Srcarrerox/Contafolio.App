@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Contafolio · Orden real</title>
+<style>
+  :root{--ink:#f2f4ff;--soft:rgba(242,244,255,.74);--ind:#6b7cff;--vio:#a06bff;--teal:#31d0c6;--accent:#6b7cff}
+  *{box-sizing:border-box;margin:0}
+  html,body{background:#1a110b;color:#fff;font-family:'Segoe UI',system-ui,sans-serif}
+  #scroller{height:600vh}
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+  /* Profundidad de campo falsa: borde desenfocado que aparece al final */
+  #dof{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse 62% 58% at 50% 48%,transparent 52%,rgba(8,12,30,.6) 100%)}
+  #vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 80% 75% at 50% 50%,transparent 55%,rgba(0,0,0,.38) 100%)}
+  /* Textos: mismo lenguaje tipográfico del motion graphic de ContaFolio */
+  #shade,#shade4{position:fixed;inset:0;pointer-events:none;opacity:0}
+  #shade{background:linear-gradient(90deg,rgba(5,6,14,.82) 0%,rgba(5,6,14,.55) 38%,transparent 68%)}
+  #shade4{background:linear-gradient(0deg,rgba(5,6,14,.82) 0%,rgba(5,6,14,.5) 26%,transparent 50%)}
+  .cap{position:fixed;left:clamp(20px,6vw,112px);top:50%;width:min(500px,calc(100vw - 40px));transform:translateY(-50%);pointer-events:none}
+  .cap .kick{font-size:15px;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);font-weight:700;margin-bottom:18px}
+  .cap h2{margin:0 0 16px;font-size:clamp(32px,4.2vw,56px);line-height:1.06;letter-spacing:-.025em;font-weight:800;color:var(--ink)}
+  .cap p{margin:0;font-size:clamp(16px,1.5vw,20px);line-height:1.55;color:var(--soft);font-weight:450}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+  .chip{font-size:14px;font-weight:600;color:#dfe4ff;padding:9px 16px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);}
+  [data-s]{opacity:0;will-change:transform,opacity}
+  #t4{left:0;right:0;width:auto;top:0;bottom:0;transform:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:calc(4vh + env(safe-area-inset-bottom,0px));gap:8px;text-align:center}
+  .mark{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px;color:#fff;background:linear-gradient(150deg,#6b7cff,#a06bff 58%,#31d0c6);box-shadow:0 30px 70px rgba(107,124,255,.42),inset 0 1px 0 rgba(255,255,255,.35)}
+  .word{font-size:clamp(40px,6.5vw,76px);font-weight:800;letter-spacing:-.035em;line-height:1;color:var(--ink)}
+  .word i{font-style:normal;background:linear-gradient(115deg,#8fa2ff 10%,#c9a9ff 55%,#7ee8e0 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 6px 24px rgba(160,107,255,.45))}
+  .tag{font-size:clamp(18px,2.2vw,26px);color:rgba(242,244,255,.82);font-weight:500;letter-spacing:.02em}
+  .rule{display:none;width:160px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--ind),transparent)}
+  #cta{font-size:15px;color:rgba(242,244,255,.7);text-decoration:underline;text-underline-offset:5px;letter-spacing:.04em;pointer-events:none}
+  #bar{position:fixed;left:0;top:0;height:3px;background:var(--accent);width:0;z-index:5}
+  #hint{position:fixed;bottom:3vh;left:50%;transform:translateX(-50%);font-size:13px;letter-spacing:.2em;opacity:.7}
+</style>
+</head>
+<body>
+<div id="scroller"></div><div id="bar"></div><div id="vig"></div><div id="dof"></div><div id="shade"></div><div id="shade4"></div>
+<div class="cap" id="t1">
+  <div class="kick" data-s>El problema de siempre</div>
+  <h2 data-s>¿Cansado del papeleo infinito?</h2>
+  <p data-s>Facturas interminables, retenciones de IVA e ISLR, hojas de cálculo que no cuadran y un escritorio que nunca se limpia.</p>
+  <div class="chips"><span class="chip" data-s>Facturas sin fin</span><span class="chip" data-s>Excel que no cuadra</span><span class="chip" data-s>Cierre a contrarreloj</span></div>
+</div>
+<div class="cap" id="t2">
+  <div class="kick" data-s>01 · Todo en un solo libro</div>
+  <h2 data-s>Contafolio elimina el caos</h2>
+  <p data-s>Automatiza tus facturas y organiza la contabilidad de decenas de empresas en una sola app: cada factura genera su asiento por partida doble, con IVA, retenciones y cuentas asignadas automáticamente. Recupera tu tiempo y tu espacio de trabajo.</p>
+  <div class="chips"><span class="chip" data-s>37 empresas</span><span class="chip" data-s>IVA 16% · ISLR</span><span class="chip" data-s>Partida doble</span></div>
+</div>
+<div class="cap" id="t3">
+  <div class="kick" data-s>02 · Estados que cuadran</div>
+  <h2 data-s>Deja atrás las pilas de papel</h2>
+  <p data-s>Balance de comprobación, balance general y estado de resultados listos para imprimir o exportar. Deja que Contafolio limpie tu escritorio… y tu mente.</p>
+  <div class="chips"><span class="chip" data-s>Balance general</span><span class="chip" data-s>Estado de resultados</span><span class="chip" data-s>VEN-NIF · INPC</span></div>
+</div>
+<div class="cap" id="t4">
+  <div class="mark" data-s>CF</div>
+  <div class="word" data-s>Conta<i>folio</i></div>
+  <div class="tag" data-s>Orden real. Contabilidad sin estrés.</div>
+  <div class="rule" data-s></div>
+  <a id="cta" href="#" data-s>Prueba Contafolio gratis</a>
+</div>
+<div id="hint">DESLIZA ↓</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+"three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* ================= 1. UTILIDADES ================= */
+const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+const smooth=t=>t*t*(3-2*t);
+const rr=(a,b)=>a+Math.random()*(b-a);
+const range=(p,a,b)=>clamp((p-a)/(b-a));
+const C=h=>new THREE.Color(h);
+
+/* ================= 2. RENDERER, ESCENA, NIEBLA ================= */
+const DPR_MAX=Math.min(window.devicePixelRatio||1,1.5);let dpr=DPR_MAX;     // resolución adaptativa (baja sola si hay lag)
+const renderer=new THREE.WebGLRenderer({antialias:DPR_MAX<1.5,powerPreference:'high-performance'});
+renderer.setPixelRatio(dpr);
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.autoUpdate=false;                               // sombras solo cuando algo se mueve de verdad
+renderer.shadowMap.needsUpdate=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+document.body.prepend(renderer.domElement);
+const scene=new THREE.Scene();
+scene.background=C(0x2a1a14);
+scene.fog=new THREE.FogExp2(0x2a1a14,0.22);
+scene.environment=new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(),0.04).texture;
+const camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,0.05,50);
+
+/* ================= 3. LUCES ================= */
+const amb=new THREE.AmbientLight(0x7fa0e0,0.3);                    // ambiente azulado frío
+const hemi=new THREE.HemisphereLight(0xbcd0ff,0x3a2616,0.35);      // relleno
+const sun=new THREE.DirectionalLight(0xffb070,1.2);
+sun.position.set(-2.5,2.6,1.8);sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);sun.shadow.radius=6;sun.shadow.bias=-0.0004;sun.shadow.normalBias=0.02;
+Object.assign(sun.shadow.camera,{left:-2,right:2,top:2,bottom:-2,near:0.5,far:8});
+const lampLight=new THREE.SpotLight(0xffa850,40,5,0.85,0.7,1.5);  // lámpara cálida
+lampLight.position.set(-0.85,1.45,0.05);lampLight.target.position.set(-0.35,0.75,0.2);
+lampLight.castShadow=true;lampLight.shadow.radius=5;lampLight.shadow.mapSize.set(1024,1024);
+const screenLight=new THREE.PointLight(0x4f8bff,0,2.5);screenLight.position.set(0,1.3,-0.1); // brillo azul del monitor
+scene.add(amb,hemi,sun,lampLight,lampLight.target,screenLight);
+
+/* ================= 4. TEXTURAS PROCEDURALES ================= */
+const mkTex=(cvs,rep)=>{const t=new THREE.CanvasTexture(cvs);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=8;
+  if(rep)t.wrapS=t.wrapT=THREE.RepeatWrapping;return t;};
+function woodTexture(){                                            // madera con vetas, rayones y desgaste
+  const c=document.createElement('canvas');c.width=1024;c.height=512;const g=c.getContext('2d');
+  g.fillStyle='#5a3520';g.fillRect(0,0,1024,512);
+  for(let i=0;i<280;i++){const y=rr(0,512),a=rr(0,6);g.globalAlpha=.25;g.strokeStyle=['#47291a','#6e4429','#3b2213'][i%3];
+    g.lineWidth=rr(.4,2.4);g.beginPath();for(let x=0;x<=1024;x+=16)g.lineTo(x,y+Math.sin(x*.01+a)*6+Math.sin(x*.043+a*2)*2);g.stroke();}
+  for(let i=0;i<14;i++){const x=rr(0,1024),y=rr(0,512),r=rr(40,120),gr=g.createRadialGradient(x,y,0,x,y,r);
+    gr.addColorStop(0,'rgba(190,140,90,.22)');gr.addColorStop(1,'rgba(190,140,90,0)');g.globalAlpha=1;g.fillStyle=gr;g.fillRect(x-r,y-r,2*r,2*r);}
+  g.strokeStyle='#d2a878';g.lineWidth=.7;g.globalAlpha=.35;
+  for(let i=0;i<60;i++){const x=rr(0,1024),y=rr(0,512),a=rr(0,3);g.beginPath();g.moveTo(x,y);g.lineTo(x+Math.cos(a)*rr(10,60),y+Math.sin(a)*rr(10,60));g.stroke();}
+  return mkTex(c);
+}
+function paperTexture(){                                           // fibras + líneas de texto tenues
+  const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d');
+  g.fillStyle='#fff';g.fillRect(0,0,256,256);
+  for(let i=0;i<900;i++){g.fillStyle=`rgba(120,110,90,${rr(.03,.1)})`;g.fillRect(rr(0,256),rr(0,256),rr(1,3),1);}
+  g.fillStyle='rgba(60,70,100,.35)';for(let y=22;y<240;y+=9)g.fillRect(18,y,rr(90,210),2);
+  g.fillStyle='rgba(30,60,120,.6)';g.fillRect(18,10,110,5);
+  return mkTex(c);
+}
+const woodTex=woodTexture(),paperTex=paperTexture();
+
+/* ================= 5. HELPERS DE MALLAS ================= */
+const std=(c,r=0.7,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
+const box=(w,h,d,mat,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
+  m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;scene.add(m);return m;};
+const TOP=0.75;
+function blob(x,z,w,d,o=.45){                                       // sombra de contacto falsa
+  const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');
+  const gr=g.createRadialGradient(32,32,2,32,32,32);gr.addColorStop(0,`rgba(0,0,0,${o})`);gr.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=gr;g.fillRect(0,0,64,64);
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));
+  m.rotation.x=-Math.PI/2;m.position.set(x,TOP+0.002,z);scene.add(m);
+}
+
+/* ================= 6. HABITACIÓN Y ESCRITORIO ================= */
+const wallMat=std(0x8a6a4a,0.95);
+const wall=new THREE.Mesh(new THREE.PlaneGeometry(8,4),wallMat);wall.position.set(0,1.6,-0.62);wall.receiveShadow=true;scene.add(wall);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(8,6),std(0x3a2616,0.9));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+const winMat=new THREE.MeshBasicMaterial({color:0xffd9a8,fog:false});
+const win=new THREE.Mesh(new THREE.PlaneGeometry(0.9,1.1),winMat);win.position.set(-1.6,1.5,-0.615);scene.add(win);
+box(1.8,1.6,0.3,std(0x3b2417),2.45,1.0,-0.47);
+const bc=[0xb8a02a,0x2f5f9a,0xdedede,0x2e7d4f,0xc9a227,0x3a3a3a];
+{const bk=new THREE.InstancedMesh(new THREE.BoxGeometry(0.08,0.28,0.22),std(0xffffff,0.6),42),d=new THREE.Object3D();let n=0;   // 42 libros = 1 draw call
+  for(let i=0;i<14;i++)for(let r=0;r<3;r++){const h=rr(.86,1.12);d.position.set(1.65+i*0.1,0.45+r*0.5+(h-1)*.14,-0.35+rr(-.02,.03));
+    d.rotation.set(0,0,(i*7+r)%9===0?rr(-.14,.14):0);d.scale.set(rr(.9,1.12),h,rr(.94,1.04));d.updateMatrix();bk.setMatrixAt(n,d.matrix);bk.setColorAt(n++,C(bc[(i+r*2)%6]));}
+  bk.castShadow=bk.receiveShadow=true;scene.add(bk);}
+// Superficie del escritorio: madera procedural
+const deskMat=new THREE.MeshStandardMaterial({map:woodTex,roughness:0.5,metalness:0.02});
+box(2.6,0.06,1.2,deskMat,0,0.72,0);
+const woodDark=std(0x4a2a18,0.6);
+[[-1.2,-0.5],[1.2,-0.5],[-1.2,0.5],[1.2,0.5]].forEach(([x,z])=>box(0.07,0.72,0.07,woodDark,x,0.36,z));
+box(0.5,0.35,0.9,std(0x3d2314,0.6),-0.9,0.5,0);
+
+/* ================= 7. MONITOR (pantalla = ShaderMaterial, texturas pre-renderizadas UNA vez) ================= */
+function drawExcel(cx){
+  cx.globalAlpha=1;cx.textAlign='left';
+  cx.fillStyle='#f3f1ea';cx.fillRect(0,0,1024,576);
+  const sd=s=>{const v=Math.sin(s*127.1)*43758.5453;return v-Math.floor(v);};
+  cx.fillStyle='#217346';cx.fillRect(0,0,1024,30);
+  cx.fillStyle='#fff';cx.font='bold 14px Arial';cx.fillText('Cuentas_2026_FINAL_v7(2).xlsx  -  Excel',10,20);
+  cx.fillStyle='#e6e6e6';cx.fillRect(0,30,1024,22);cx.fillStyle='#fff';cx.fillRect(40,33,970,16);
+  cx.fillStyle='#333';cx.font='12px Arial';cx.fillText('fx  =SUMA(B2:B48)-C12/#REF!',46,45);
+  const cw=80,rh=17,x0=34,y0=52;
+  cx.fillStyle='#e6e6e6';cx.fillRect(0,y0,1024,rh);cx.fillRect(0,y0,x0,576);
+  cx.font='bold 12px Arial';cx.fillStyle='#333';
+  for(let c=0;c<12;c++)cx.fillText(String.fromCharCode(65+c),x0+c*cw+cw/2-4,y0+13);
+  cx.strokeStyle='#c8c8c8';cx.lineWidth=1;
+  const rows=Math.floor((540-y0-rh)/rh);
+  for(let r=0;r<rows;r++){
+    const y=y0+rh+r*rh;
+    cx.textAlign='left';cx.fillStyle='#333';cx.font='11px Arial';cx.fillText(String(r+1),6,y+13);
+    cx.beginPath();cx.moveTo(0,y+rh);cx.lineTo(1024,y+rh);cx.stroke();
+    for(let c=0;c<12;c++){
+      const s=r*13+c+1,v=sd(s);let t;
+      if(c==0)t=['Factura','Recibo','Pago','IVA','Nómina','Gasto','Cobro'][Math.floor(v*7)]+' '+(100+Math.floor(sd(s+5)*899));
+      else if(v<0.06)t='#REF!';else if(v<0.1)t='#VALOR!';else t=(sd(s+9)*99999).toFixed(2);
+      if(v>0.9&&c>0){cx.fillStyle='#fff2a8';cx.fillRect(x0+c*cw,y,cw,rh);}
+      const neg=v>0.75&&c>0&&t[0]!='#';if(neg)t='-'+t;
+      cx.font='11px monospace';cx.fillStyle=(t[0]=='#'||neg)?'#c00000':'#222';
+      cx.textAlign=c==0?'left':'right';cx.fillText(t,c==0?x0+3:x0+(c+1)*cw-4,y+13);
+    }
+  }
+  cx.textAlign='left';
+  for(let c=0;c<=12;c++){cx.beginPath();cx.moveTo(x0+c*cw,y0);cx.lineTo(x0+c*cw,540);cx.stroke();}
+  cx.fillStyle='#f0f0f0';cx.fillRect(0,546,1024,30);cx.fillStyle='#217346';cx.font='bold 12px Arial';
+  ['Hoja1','Hoja1 (2)','COPIA','Sheet3 FINAL'].forEach((s,i)=>cx.fillText(s,12+i*90,565));
+  cx.fillStyle='#fff';cx.fillRect(540,110,260,205);cx.strokeStyle='#999';cx.strokeRect(540,110,260,205);
+  [['#e8903a',60],['#3a80c9',120],['#e8c23a',90],['#d9534f',150],['#3a80c9',70]].forEach(([c,h],i)=>{cx.fillStyle=c;cx.fillRect(560+i*50,300-h,34,h);});
+  cx.fillStyle='#fff';cx.fillRect(790,350,200,170);cx.strokeRect(790,350,200,170);
+  cx.fillStyle='#e8903a';cx.beginPath();cx.moveTo(880,430);cx.arc(880,430,70,0,4);cx.fill();
+  cx.fillStyle='#3a80c9';cx.beginPath();cx.moveTo(880,430);cx.arc(880,430,70,4,6.2);cx.fill();
+
+}
+function drawConta(cx){
+  // --- Contafolio limpio (azul + grises fríos) ---
+  
+  cx.fillStyle='#eef2f9';cx.fillRect(0,0,1024,576);
+  cx.fillStyle='#fff';cx.fillRect(0,0,1024,64);
+  cx.fillStyle='#14233f';cx.font='bold 26px Segoe UI,Arial';cx.fillText('Contafolio',90,40);
+  cx.fillStyle='#2f6df6';cx.beginPath();cx.arc(48,32,18,0,7);cx.fill();
+  cx.fillStyle='#fff';cx.font='bold 18px Arial';cx.fillText('C',41,39);
+  cx.fillStyle='#fff';cx.fillRect(0,64,90,512);
+  ['AB','LM','TR','NK','+'].forEach((s,i)=>{cx.fillStyle=i==0?'#2f6df6':'#dde6f7';cx.beginPath();cx.arc(45,115+i*70,24,0,7);cx.fill();
+    cx.fillStyle=i==0?'#fff':'#35476e';cx.font='bold 16px Arial';cx.fillText(s,45-cx.measureText(s).width/2,121+i*70);});
+  [['Ingresos','$48.230','#2f6df6'],['Gastos','$21.870','#6b84b8'],['Balance','$26.360','#1f4fc4']].forEach(([a,b,c],i)=>{
+    const x=120+i*295;cx.fillStyle='#fff';cx.fillRect(x,92,275,110);cx.fillStyle=c;cx.fillRect(x,92,6,110);
+    cx.fillStyle='#7a89a8';cx.font='16px Arial';cx.fillText(a,x+24,126);cx.fillStyle='#14233f';cx.font='bold 34px Arial';cx.fillText(b,x+24,172);});
+  cx.fillStyle='#fff';cx.fillRect(120,226,560,320);cx.fillRect(704,226,290,320);
+  cx.fillStyle='#14233f';cx.font='bold 16px Arial';cx.fillText('Flujo mensual',140,254);cx.fillText('Distribución',724,254);
+  [140,190,160,230,200,260,240].forEach((h,i)=>{cx.fillStyle=i==6?'#2f6df6':'#bcd0fb';cx.fillRect(150+i*72,520-h,44,h);});
+  cx.strokeStyle='#2f6df6';cx.lineWidth=14;cx.beginPath();cx.arc(850,380,58,-1.5,3);cx.stroke();
+  cx.strokeStyle='#9db8f5';cx.beginPath();cx.arc(850,380,58,3,4.7);cx.stroke();
+  cx.fillStyle='#2f6df6';cx.fillRect(740,478,220,40);cx.fillStyle='#fff';cx.font='bold 16px Arial';cx.fillText('Nueva factura',790,504);
+  
+}
+const mkScreenTex=draw=>{const c=document.createElement('canvas');c.width=2048;c.height=1152;const g=c.getContext('2d');g.scale(2,2);draw(g);return mkTex(c);};
+const texA=mkScreenTex(drawExcel),texB=mkScreenTex(drawConta);        // ya no se redibuja nada durante el scroll
+const bezel=new THREE.MeshPhysicalMaterial({color:0x111111,roughness:0.35,metalness:0.3,clearcoat:0.6});
+box(1.0,0.62,0.04,bezel,0,TOP+0.55,-0.45);
+box(0.06,0.25,0.06,bezel,0,TOP+0.12,-0.45);
+box(0.35,0.02,0.2,bezel,0,TOP+0.01,-0.45);
+const scrMat=new THREE.ShaderMaterial({
+  uniforms:{mapA:{value:texA},mapB:{value:texB},mapC:{value:texA},uC:{value:0},uT:{value:0},uK:{value:0}},
+  vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+  fragmentShader:`uniform sampler2D mapA,mapB,mapC;uniform float uT,uK,uC;varying vec2 vUv;
+  void main(){float m=uK*uK*(3.-2.*uK);
+    vec3 cb=texture2D(mapB,vUv).rgb;if(uC>0.)cb=mix(cb,texture2D(mapC,vUv).rgb,uC);
+    vec3 c=mix(texture2D(mapA,vUv).rgb,cb,m);   // crossfade Excel -> Contafolio en GPU
+    c*=1.-.06*(.5+.5*sin(vUv.y*700.+uT*2.));
+    vec2 d=vUv-.5;c+=vec3(.04,.09,.2)*(.65-dot(d,d)*1.4)*uK;
+    float b=smoothstep(.1,0.,abs(vUv.x*.8+vUv.y*.6-fract(uT*.04)*1.8+.2));c+=b*.05;
+    c*=1.-dot(d,d)*.45;
+    gl_FragColor=vec4(c,1.);
+    #include <colorspace_fragment>
+  }`});
+const screen=new THREE.Mesh(new THREE.PlaneGeometry(0.94,0.53),scrMat);screen.position.set(0,TOP+0.55,-0.428);scene.add(screen);
+
+/* ================= 8. PROPS FIJOS ================= */
+
+/* ---- TECLADO (proporciones reales tipo low-profile) ---- */
+const kbMat=new THREE.MeshPhysicalMaterial({color:0x1a1a1c,roughness:0.5,metalness:0.12,clearcoat:0.2});
+const keyMat=new THREE.MeshStandardMaterial({color:0x2a2a2e,roughness:0.55});
+// base
+const kbW=0.44, kbD=0.145, kbH=0.014;
+const kbBase=new THREE.Mesh(new THREE.BoxGeometry(kbW,kbH,kbD),kbMat);
+kbBase.position.set(0,TOP+kbH/2,0.13);kbBase.castShadow=kbBase.receiveShadow=true;scene.add(kbBase);
+// teclas: filas con anchos reales (unidades ≈ 19mm)
+const u=0.019, g=0.0018, kh=0.007; // u=unidad tecla, g=gap, kh=altura tecla
+// cada fila: lista de anchos en unidades (1 = tecla normal)
+const layout=[
+  // números
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,2],
+  // QWERTY + backspace ancho
+  [1.5,1,1,1,1,1,1,1,1,1,1,1,1,1.5],
+  // caps + ASDF + enter
+  [1.75,1,1,1,1,1,1,1,1,1,1,1,2.25],
+  // shift + ZXCV + shift
+  [2.25,1,1,1,1,1,1,1,1,1,1,2.75],
+  // ctrl/alt/space/alt/ctrl
+  [1.25,1.25,1.25,6.25,1.25,1.25,1.25,1.25],
+];
+const totalKeys=layout.reduce((n,r)=>n+r.length,0);
+const keyGeo=new THREE.BoxGeometry(1,kh,u-g*0.5);
+const keysIM=new THREE.InstancedMesh(keyGeo,keyMat,totalKeys);
+keysIM.castShadow=true;
+const kd=new THREE.Object3D();
+const colKey=new THREE.Color(0x2e2e32), colAcc=new THREE.Color(0x4f6dff);
+let ki=0;
+const rowZ=[-0.048,-0.026,-0.004,0.018,0.040]; // números hacia monitor (-Z), espacio hacia usuario (+Z)
+const originX=-kbW/2+0.012; // margen izquierdo
+const keyY=TOP+kbH+kh/2+0.001;
+layout.forEach((row,ri)=>{
+  let x=originX;
+  const totalU=row.reduce((a,b)=>a+b,0);
+  // centrar fila si sobra espacio
+  const rowWidth=totalU*u+(row.length-1)*g*0.15;
+  x= -rowWidth/2;
+  row.forEach((wU,i)=>{
+    const w=wU*u-g;
+    kd.position.set(x+w/2, keyY, 0.13+rowZ[ri]);
+    kd.scale.set(w,1,1);
+    kd.updateMatrix();
+    keysIM.setMatrixAt(ki,kd.matrix);
+    // espacio (fila 4, tecla índice 3) en azul
+    const isSpace=ri===4&&i===3;
+    keysIM.setColorAt(ki, isSpace?colAcc:colKey);
+    ki++;
+    x+=wU*u;
+  });
+});
+keysIM.instanceColor.needsUpdate=true;
+scene.add(keysIM);
+
+/* ---- RATÓN: silueta extruida (se lee como ratón desde cualquier ángulo) ---- */
+const mouseG=new THREE.Group();scene.add(mouseG);
+const mMat=new THREE.MeshPhysicalMaterial({color:0x1a1a1e,roughness:0.4,metalness:0.06,clearcoat:0.5,clearcoatRoughness:0.3});
+// Contorno visto desde arriba (X = ancho, Y del shape = largo en Z del mundo)
+// Frente (botones) = -Z = valores negativos en el shape.y
+const mShape=new THREE.Shape();
+mShape.moveTo( 0.000, -0.048);  // punta frontal
+mShape.bezierCurveTo( 0.018,-0.048, 0.028,-0.040, 0.030,-0.028);
+mShape.bezierCurveTo( 0.032,-0.010, 0.032, 0.020, 0.028, 0.038); // costado derecho hacia atrás
+mShape.bezierCurveTo( 0.022, 0.050, 0.010, 0.054, 0.000, 0.054); // cola
+mShape.bezierCurveTo(-0.010, 0.054,-0.022, 0.050,-0.028, 0.038);
+mShape.bezierCurveTo(-0.032, 0.020,-0.032,-0.010,-0.030,-0.028);
+mShape.bezierCurveTo(-0.028,-0.040,-0.018,-0.048, 0.000,-0.048);
+const mGeo=new THREE.ExtrudeGeometry(mShape,{depth:0.022,bevelEnabled:true,bevelThickness:0.006,bevelSize:0.005,bevelSegments:3,curveSegments:12});
+// ExtrudeGeometry genera en XY y depth en Z local → reorientar para que quede plano sobre el escritorio
+mGeo.rotateX(-Math.PI/2); // depth pasa a ser altura Y
+const mBody=new THREE.Mesh(mGeo,mMat);
+mBody.position.set(0.40, TOP+0.001, 0.195);
+mBody.castShadow=true;mBody.receiveShadow=true;
+// Rueda (cerca del frente / botones)
+const wheel=new THREE.Mesh(
+  new THREE.CylinderGeometry(0.0045,0.0045,0.011,14),
+  new THREE.MeshStandardMaterial({color:0x2e2e32,roughness:0.4})
+);
+wheel.rotation.z=Math.PI/2;
+wheel.position.set(0.40, TOP+0.026, 0.170);
+// Ranura central
+const seam=new THREE.Mesh(
+  new THREE.BoxGeometry(0.001,0.005,0.020),
+  new THREE.MeshStandardMaterial({color:0x08080a,roughness:1})
+);
+seam.position.set(0.40, TOP+0.025, 0.172);
+mouseG.add(mBody,wheel,seam);
+
+/* ---- CABLES: solo sobre el escritorio; se ocultan bajo la base del monitor ---- */
+
+// Ratón → mesa → debajo de la base (sin subir al panel)
+const cablePts=[
+  new THREE.Vector3(0.40, TOP+0.005, 0.155),
+  new THREE.Vector3(0.30, TOP+0.0035, 0.10),
+  new THREE.Vector3(0.20, TOP+0.003, 0.02),
+  new THREE.Vector3(0.12, TOP+0.003,-0.12),
+  new THREE.Vector3(0.10, TOP+0.003,-0.28),
+  new THREE.Vector3(0.12, TOP+0.002,-0.42), // bajo la base del monitor
+];
+const cable=new THREE.Mesh(
+  new THREE.TubeGeometry(new THREE.CatmullRomCurve3(cablePts),32,0.0018,6,false),
+  new THREE.MeshStandardMaterial({color:0x1a1a1e,roughness:0.75})
+);
+cable.castShadow=true;scene.add(cable);
+
+// Teclado → mesa → debajo de la base
+const kbCablePts=[
+  new THREE.Vector3(0.00, TOP+0.010, 0.055),
+  new THREE.Vector3(-0.02, TOP+0.0035, 0.00),
+  new THREE.Vector3(-0.04, TOP+0.003,-0.12),
+  new THREE.Vector3(-0.05, TOP+0.003,-0.28),
+  new THREE.Vector3(-0.04, TOP+0.002,-0.42), // bajo la base
+];
+const kbCable=new THREE.Mesh(
+  new THREE.TubeGeometry(new THREE.CatmullRomCurve3(kbCablePts),28,0.0018,6,false),
+  new THREE.MeshStandardMaterial({color:0x1a1a1e,roughness:0.75})
+);
+kbCable.castShadow=true;scene.add(kbCable);
+
+/* ---- Disco SSD/* ---- Disco SSD/* ---- Disco SSD / hub externo ---- */
+const padMat=new THREE.MeshPhysicalMaterial({color:0x252528,roughness:0.42,metalness:0.18,clearcoat:0.25});
+const pad=new THREE.Mesh(new THREE.BoxGeometry(0.10,0.010,0.065),padMat);
+pad.position.set(0.70,TOP+0.006,0.10);pad.castShadow=pad.receiveShadow=true;scene.add(pad);
+const padLed=new THREE.Mesh(new THREE.CircleGeometry(0.0028,8),new THREE.MeshBasicMaterial({color:0x3dffa8}));
+padLed.rotation.x=-Math.PI/2;padLed.position.set(0.735,TOP+0.0115,0.122);scene.add(padLed);
+
+/* ---- Libreta Moleskine ---- */
+const nbMat=new THREE.MeshStandardMaterial({color:0x1a1520,roughness:0.85});
+const nb=new THREE.Mesh(new THREE.BoxGeometry(0.10,0.011,0.14),nbMat);
+nb.position.set(-0.88,TOP+0.007,0.20);nb.rotation.y=0.22;nb.castShadow=true;scene.add(nb);
+const pages=new THREE.Mesh(new THREE.BoxGeometry(0.096,0.009,0.136),new THREE.MeshStandardMaterial({color:0xf0e8d8,roughness:0.9}));
+pages.position.set(-0.878,TOP+0.0065,0.20);pages.rotation.y=0.22;scene.add(pages);
+const band=new THREE.Mesh(new THREE.BoxGeometry(0.007,0.013,0.142),new THREE.MeshStandardMaterial({color:0x8b1e2d,roughness:0.6}));
+band.position.set(-0.85,TOP+0.008,0.20);band.rotation.y=0.22;scene.add(band);
+
+/* ---- Taza con asa y café ---- */
+const mugMat=new THREE.MeshPhysicalMaterial({color:0xe9e3d8,roughness:0.25,clearcoat:1,clearcoatRoughness:0.1});
+const mug=new THREE.Mesh(new THREE.CylinderGeometry(0.042,0.038,0.085,24),mugMat);
+mug.position.set(0.95,TOP+0.043,0.08);mug.castShadow=true;scene.add(mug);
+const mugIn=new THREE.Mesh(new THREE.CylinderGeometry(0.036,0.033,0.075,24),new THREE.MeshStandardMaterial({color:0xd4cfc4,roughness:0.5,side:THREE.BackSide}));
+mugIn.position.set(0.95,TOP+0.048,0.08);scene.add(mugIn);
+const coffee=new THREE.Mesh(new THREE.CircleGeometry(0.034,24),new THREE.MeshStandardMaterial({color:0x3a2212,roughness:0.3}));
+coffee.rotation.x=-Math.PI/2;coffee.position.set(0.95,TOP+0.078,0.08);scene.add(coffee);
+// asa vertical en el lado derecho de la taza
+const handleCurve=new THREE.CatmullRomCurve3([
+  new THREE.Vector3(0.042, 0.018, 0),
+  new THREE.Vector3(0.068, 0.022, 0),
+  new THREE.Vector3(0.078, 0.000, 0),
+  new THREE.Vector3(0.068,-0.022, 0),
+  new THREE.Vector3(0.042,-0.016, 0),
+]);
+const handle=new THREE.Mesh(new THREE.TubeGeometry(handleCurve,14,0.0065,8,false),mugMat);
+handle.position.set(0.95,TOP+0.048,0.08);
+handle.rotation.y=-Math.PI/2;
+handle.castShadow=true;scene.add(handle);
+
+/* ---- LED power del monitor (en la base, no flotando) ---- */
+const powerLed=new THREE.Mesh(new THREE.CircleGeometry(0.0035,10),new THREE.MeshBasicMaterial({color:0x4f8bff}));
+powerLed.rotation.x=-Math.PI/2;
+powerLed.position.set(0.10, TOP+0.012, -0.36);
+scene.add(powerLed);
+const ledGlow=new THREE.Sprite(new THREE.SpriteMaterial({
+  map:(()=>{const cv=document.createElement('canvas');cv.width=cv.height=32;const g=cv.getContext('2d');
+    const gr=g.createRadialGradient(16,16,0,16,16,16);gr.addColorStop(0,'rgba(100,160,255,1)');gr.addColorStop(1,'rgba(100,160,255,0)');
+    g.fillStyle=gr;g.fillRect(0,0,32,32);const t=new THREE.CanvasTexture(cv);t.colorSpace=THREE.SRGBColorSpace;return t;})(),
+  blending:THREE.AdditiveBlending,depthWrite:false,transparent:true,opacity:0.65
+}));
+ledGlow.position.set(0.10, TOP+0.014, -0.36);ledGlow.scale.setScalar(0.035);scene.add(ledGlow);
+
+// sombras de contacto
+blob(0,-0.45,0.5,0.3,.5);
+blob(0.95,0.08,0.16,0.16,.5);
+blob(-0.95,0,0.3,0.3,.5);
+blob(0,0.13,0.48,0.18,.35);   // teclado
+blob(0.40,0.20,0.07,0.11,.4); // ratón
+blob(-0.88,0.20,0.12,0.16,.35); // libreta
+blob(0.70,0.10,0.11,0.08,.3);  // disco
+
+// Lámpara vintage
+const brass=std(0xb08d4a,0.35,0.8),lamp=new THREE.Group();scene.add(lamp);
+const arm=(a,b)=>{const d=b.clone().sub(a),m=new THREE.Mesh(new THREE.CylinderGeometry(0.012,0.012,d.length(),8),brass);
+  m.position.copy(a.clone().add(b).multiplyScalar(.5));m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());m.castShadow=true;return m;};
+const j1=new THREE.Vector3(-0.95,TOP+0.04,0),j2=new THREE.Vector3(-0.75,TOP+0.55,0),j3=new THREE.Vector3(-0.85,TOP+0.7,0.05);
+const lb=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.12,0.04,24),brass);lb.position.set(-0.95,TOP+0.02,0);
+const head=new THREE.Mesh(new THREE.ConeGeometry(0.13,0.16,24,1,true),new THREE.MeshStandardMaterial({color:0xa07a3a,metalness:.8,roughness:.35,side:THREE.DoubleSide}));
+head.position.copy(j3);head.rotation.z=0.5;head.castShadow=true;
+const bulb=new THREE.Mesh(new THREE.SphereGeometry(0.04,12,12),new THREE.MeshBasicMaterial({color:0xffe2a8}));bulb.position.set(j3.x+0.01,j3.y-0.04,j3.z);
+lamp.add(lb,arm(j1,j2),arm(j2,j3),head,bulb);
+
+/* ================= 9. DESORDEN: InstancedMesh + disolución 100% en GPU ================= */
+const NZ=(()=>{const n=128,d=new Uint8Array(n*n);for(let i=0;i<d.length;i++)d[i]=Math.floor(Math.random()*256);
+  const t=new THREE.DataTexture(d,n,n,THREE.RedFormat,THREE.UnsignedByteType);
+  t.wrapS=t.wrapT=THREE.RepeatWrapping;t.magFilter=t.minFilter=THREE.LinearFilter;t.needsUpdate=true;return t;})();   // ruido barato (1 fetch en vez de hash+sin)
+const U={uTime:{value:0},uNoise:{value:NZ}};
+const NZF='uniform sampler2D uNoise;float nz(vec2 p){return texture2D(uNoise,p*(1./128.)).r;}';
+function dissolveMat(mat,{border=0,curl=0,flut=1,ax=[0,1,0]}={}){
+  mat.onBeforeCompile=s=>{
+    s.uniforms.uTime=U.uTime;s.uniforms.uNoise=U.uNoise;
+    s.uniforms.uBorder={value:border};s.uniforms.uCurl={value:curl};s.uniforms.uFlut={value:flut};s.uniforms.uAx={value:new THREE.Vector3(...ax)};
+    s.vertexShader=s.vertexShader
+      .replace('#include <common>','#include <common>\nattribute float aDis;attribute float aSeed;varying float vDis;varying vec3 vP;varying vec3 vN;uniform float uTime,uCurl,uFlut;uniform vec3 uAx;')
+      .replace('#include <begin_vertex>',`#include <begin_vertex>
+        vP=position;vN=normal;vDis=aDis;
+        transformed.z+=uCurl*pow(max(0.,(position.x-position.y)*14.+.3),2.)*.012;
+        float flt=aDis*(1.-aDis)*4.*uFlut;                                   // el papel se ondula al despegar: ya no es una losa rígida
+        transformed+=uAx*flt*(.03*sin(position.x*16.+aSeed*6.28+uTime*3.)+.02*sin(position.z*20.+position.y*20.+uTime*2.5+aSeed*9.));`);
+    s.fragmentShader=s.fragmentShader
+      .replace('#include <common>','#include <common>\nvarying float vDis;varying vec3 vP;varying vec3 vN;uniform float uBorder;\n'+NZF)
+      .replace('#include <clipping_planes_fragment>',`#include <clipping_planes_fragment>
+        float dd=1.;
+        if(vDis>.001){vec2 np=(vP.xz+vP.y*5.)*45.;dd=nz(np)*.7+nz(np*2.9)*.3-vDis*1.2+.1;if(dd<0.)discard;}
+        if(uBorder>0.&&abs(vN.y)>.5){vec2 q=abs(vP.xz)/vec2(.15,.105);if(max(q.x,q.y)>1.-.05*nz(vP.xz*90.))discard;}`)
+      .replace('#include <map_fragment>','#include <map_fragment>\nif(uBorder>0.&&abs(vN.y)<.5)diffuseColor.rgb=diffuse*.9;')
+      .replace('#include <dithering_fragment>',`#include <dithering_fragment>
+        if(vDis>.001){gl_FragColor.rgb+=(1.-smoothstep(0.,.1,dd))*vec3(.25,.5,1.)*.9+(1.-smoothstep(0.,.025,dd))*vec3(.6,.85,1.)*.7;}`);
+  };
+  return mat;
+}
+// Las sombras también se disuelven (antes seguían sólidas -> por eso se veía "sólido")
+const depthMat=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});
+depthMat.onBeforeCompile=s=>{
+  s.uniforms.uNoise=U.uNoise;
+  s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nattribute float aDis;varying float vDis;varying vec3 vP;')
+    .replace('#include <begin_vertex>','#include <begin_vertex>\nvP=position;vDis=aDis;');
+  s.fragmentShader=s.fragmentShader.replace('#include <common>','#include <common>\nvarying float vDis;varying vec3 vP;\n'+NZF)
+    .replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nif(vDis>.001){vec2 np=(vP.xz+vP.y*5.)*45.;float dd=nz(np)*.7+nz(np*2.9)*.3-vDis*1.2+.1;if(dd<0.)discard;}');
+};
+const groups=[],items=[];
+function makeGroup(geo,mat,n){
+  geo.setAttribute('aDis',new THREE.InstancedBufferAttribute(new Float32Array(n),1).setUsage(THREE.DynamicDrawUsage));
+  geo.setAttribute('aSeed',new THREE.InstancedBufferAttribute(Float32Array.from({length:n},()=>Math.random()),1));
+  const im=new THREE.InstancedMesh(geo,mat,n);im.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  im.castShadow=im.receiveShadow=true;im.frustumCulled=false;im.customDepthMaterial=depthMat;scene.add(im);
+  const G={im,i:0,dis:geo.attributes.aDis,dirty:false};groups.push(G);return G;
+}
+function put(G,o){
+  const idx=G.i++;if(o.color!==undefined)G.im.setColorAt(idx,C(o.color));
+  items.push({G,idx,x0:o.x,y0:o.y,z0:o.z,rx0:o.rx||0,ry0:o.ry||0,rz0:o.rz||0,sx:o.sx||1,sy:o.sy||1,sz:o.sz||1,
+    start:o.delay,len:o.len||0.22,rx:rr(-1,1),rz:rr(-1,1),dx:rr(-.15,.15),dz:rr(-.15,.15),lift:rr(.45,.7),sw:rr(-1.2,1.2),k:-1});
+}
+const dummy=new THREE.Object3D();
+function updateItem(c,p){
+  const k=smooth(range(p,c.start,c.start+c.len));if(k===c.k)return false;c.k=k;
+  c.G.dis.array[c.idx]=k;
+  if(k>=.995){dummy.position.set(c.x0,c.y0,c.z0);dummy.rotation.set(0,0,0);dummy.scale.setScalar(0);}
+  else{dummy.position.set(c.x0+c.dx*k,c.y0+k*c.lift,c.z0+c.dz*k);dummy.rotation.set(c.rx0+c.rx*.5*k,c.ry0+c.sw*k,c.rz0+c.rz*.5*k);dummy.scale.set(c.sx,c.sy,c.sz);}
+  dummy.updateMatrix();c.G.im.setMatrixAt(c.idx,dummy.matrix);return true;
+}
+const paperCols=[0xf3efe4,0xeadfc4,0xf8f6f0,0xe2cc8e];
+const GP=makeGroup(new THREE.BoxGeometry(0.3,0.008,0.21),dissolveMat(new THREE.MeshStandardMaterial({color:0xffffff,map:paperTex,roughness:0.9}),{border:1}),130);
+const stackSrc=[];
+function stack(x,z,n,spread,d0){
+  stackSrc.push({x,z,d0});
+  for(let i=0;i<n;i++)put(GP,{x:x+rr(-spread,spread),y:TOP+0.004+i*0.008,z:z+rr(-spread,spread),ry:rr(-.5,.5),rz:rr(-.02,.02),color:paperCols[i%4],delay:d0+i/n*0.35+rr(0,.08)});
+}
+stack(-0.55,-0.15,40,0.03,0.08);stack(-0.15,0.28,14,0.05,0.12);stack(1.0,0.28,34,0.04,0.05);
+stack(0.95,-0.2,22,0.04,0.15);stack(0.1,0.42,8,0.08,0.25);
+put(GP,{x:-0.4,y:TOP+0.012,z:0.25,ry:0.2,sx:.32/.3,sy:2.5,sz:.24/.21,color:0xd8b878,delay:0.2});   // carpeta kraft
+// papeles arrugados (jitter determinista por vértice: ya no se abren grietas)
+const cgeo=new THREE.IcosahedronGeometry(0.05,1),cpp=cgeo.attributes.position;
+const jit=(x,y,z,o)=>{const s=Math.sin(x*127.1+y*311.7+z*74.7+o)*43758.5453;return .8+.4*(s-Math.floor(s));};
+for(let i=0;i<cpp.count;i++){const x=cpp.getX(i),y=cpp.getY(i),z=cpp.getZ(i);cpp.setXYZ(i,x*jit(x,y,z,0),y*jit(x,y,z,5.3),z*jit(x,y,z,9.1));}
+cgeo.computeVertexNormals();
+const GC=makeGroup(cgeo,dissolveMat(std(0xf4f1ea,0.95),{flut:.6}),4);
+[[1.0,0.28,0.31],[-0.75,0.15,0.04],[0.6,0.35,0.04],[-1.05,-0.2,0.04]].forEach(([x,z,dy])=>put(GC,{x,y:TOP+dy,z,sx:rr(.9,1.1),sy:rr(.9,1.1),sz:rr(.9,1.1),ry:rr(0,6),delay:rr(0.15,0.4)}));
+const GE=makeGroup(new THREE.CylinderGeometry(0.008,0.008,0.14,8),dissolveMat(std(0xffffff,0.5),{flut:.5}),4);
+[[0xff4fa8,0.5,0.4],[0xe8ff2a,0.6,0.38],[0x2d4bd6,0.72,0.3],[0xc9a227,-0.45,0.4]].forEach(([c,x,z],i)=>
+  put(GE,{x,y:TOP+0.009,z,rz:Math.PI/2,ry:rr(0,3),color:c,delay:0.3+i*0.05}));
+// Post-its (1 solo draw call)
+const pc=[0xffe94d,0xff8fb3,0x7fd6e8,0xb8f27a,0xffc46b];
+const GS=makeGroup(new THREE.PlaneGeometry(0.075,0.075,6,6),dissolveMat(new THREE.MeshStandardMaterial({color:0xffffff,roughness:.9,side:THREE.DoubleSide}),{curl:1,flut:1.3,ax:[0,0,1]}),40);
+const postit=(x,y,z,d,flat,s=1)=>put(GS,{x,y,z,rx:flat?-Math.PI/2:0,rz:rr(-.2,.2),sx:s,sy:s,sz:s,color:pc[Math.floor(rr(0,5))],delay:d,len:.2});
+for(let i=0,n=0;n<26&&i<400;i++){const x=rr(-1.25,1.2),y=rr(1.0,1.95);
+  if(Math.abs(x)<0.62&&y<1.68)continue;
+  if(Math.abs(x+1.0)<.17&&Math.abs(y-1.85)<.17)continue;           // espacio del reloj
+  postit(x,y,-0.617,rr(.2,.55));n++;}
+[[-0.45,.86],[-0.1,.865],[0.3,.86],[0.505,.7],[-0.505,.45]].forEach(([x,y])=>postit(x,TOP+y,-0.424,rr(.15,.5),false,.6));
+for(let i=0;i<5;i++)postit(rr(-.3,.6),TOP+0.004,rr(.48,.56),rr(.3,.5),true);
+groups.forEach(G=>G.im.count=G.i);
+
+/* ---- Detalles nuevos ---- */
+const radial=(stops,sz=128)=>{const c=document.createElement('canvas');c.width=c.height=sz;const g=c.getContext('2d'),gr=g.createRadialGradient(sz/2,sz/2,0,sz/2,sz/2,sz/2);
+  stops.forEach(([o,col])=>gr.addColorStop(o,col));g.fillStyle=gr;g.fillRect(0,0,sz,sz);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;};
+// Halo de la bombilla
+const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:radial([[0,'rgba(255,235,180,1)'],[.25,'rgba(255,190,100,.45)'],[1,'rgba(255,160,60,0)']]),blending:THREE.AdditiveBlending,depthWrite:false,transparent:true,fog:false}));
+glow.position.copy(bulb.position);glow.scale.setScalar(.42);scene.add(glow);
+// Cono de luz volumétrico falso desde la lámpara
+const coneH=1.0,coneG=new THREE.ConeGeometry(.4,coneH,32,1,true);coneG.translate(0,-coneH/2,0);
+const coneMat=new THREE.ShaderMaterial({uniforms:{uI:{value:.5},uH:{value:coneH}},transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,
+  vertexShader:`uniform float uH;varying float vT;varying vec3 vNn;varying vec3 vV;
+    void main(){vT=-position.y/uH;vec4 mv=modelViewMatrix*vec4(position,1.);vNn=normalMatrix*normal;vV=-mv.xyz;gl_Position=projectionMatrix*mv;}`,
+  fragmentShader:`uniform float uI;varying float vT;varying vec3 vNn;varying vec3 vV;
+    void main(){float f=abs(dot(normalize(vNn),normalize(vV)));float a=pow(f,1.6)*pow(1.-vT,1.3)*smoothstep(0.,.08,vT)*.16*uI;
+      gl_FragColor=vec4(vec3(1.,.72,.38)*a,a);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>}`});
+const cone=new THREE.Mesh(coneG,coneMat);cone.position.copy(bulb.position);cone.frustumCulled=false;
+cone.quaternion.setFromUnitVectors(new THREE.Vector3(0,-1,0),new THREE.Vector3(-0.35,0.75,0.2).sub(bulb.position).normalize());scene.add(cone);
+// Planta en maceta
+{const pot=new THREE.Mesh(new THREE.CylinderGeometry(.045,.033,.07,16),std(0xb4643c,.8));pot.position.set(1.24,TOP+.035,-.32);pot.castShadow=pot.receiveShadow=true;scene.add(pot);
+  const lv=new THREE.InstancedMesh(new THREE.ConeGeometry(.02,.17,6).translate(0,.085,0),std(0xffffff,.7),9),d=new THREE.Object3D();
+  for(let i=0;i<9;i++){d.position.set(1.24,TOP+.068,-.32);d.rotation.set(rr(-.55,.55),rr(0,6.28),rr(-.7,.7));d.scale.set(1.7,rr(.7,1.2),.45);d.updateMatrix();lv.setMatrixAt(i,d.matrix);lv.setColorAt(i,C([0x4f9a52,0x3d8a48,0x62ad5a][i%3]));}
+  lv.castShadow=true;scene.add(lv);}
+// Anillo de café en el escritorio
+{const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');g.strokeStyle='rgba(70,38,18,.55)';g.lineWidth=5;g.beginPath();g.arc(64,64,48,.3,5.6);g.stroke();
+  g.lineWidth=2;g.strokeStyle='rgba(70,38,18,.3)';g.beginPath();g.arc(64,64,43,1,4.2);g.stroke();
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(.11,.11),new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}));
+  m.rotation.x=-Math.PI/2;m.position.set(.76,TOP+.0025,.2);scene.add(m);}
+// Reloj de pared con segundero
+const hands={};
+{const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d');g.fillStyle='#efe6d2';g.beginPath();g.arc(128,128,126,0,7);g.fill();
+  g.strokeStyle='#3a2a1a';for(let i=0;i<12;i++){const a=i/12*Math.PI*2;g.lineWidth=i%3?3:7;g.beginPath();g.moveTo(128+Math.sin(a)*100,128-Math.cos(a)*100);g.lineTo(128+Math.sin(a)*116,128-Math.cos(a)*116);g.stroke();}
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;
+  const grp=new THREE.Group();grp.position.set(-1.0,1.85,-.612);
+  grp.add(new THREE.Mesh(new THREE.CircleGeometry(.11,40),new THREE.MeshStandardMaterial({map:t,roughness:.6})));
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(.11,.008,8,40),brass);rim.position.z=.004;grp.add(rim);
+  const hand=(len,w,col,z)=>{const p=new THREE.Group(),m=new THREE.Mesh(new THREE.BoxGeometry(w,len,.003),new THREE.MeshBasicMaterial({color:col}));m.position.y=len/2-len*.12;p.add(m);p.position.z=z;grp.add(p);return p;};
+  hands.h=hand(.055,.007,0x2a1c10,.008);hands.m=hand(.085,.005,0x2a1c10,.011);hands.s=hand(.095,.0025,0xd43b2f,.014);scene.add(grp);}
+
+/* ================= 10. PARTÍCULAS (todo se anima en la GPU, 0 trabajo de CPU por frame) ================= */
+const PU={uTime:U.uTime,uScale:{value:540},uP:{value:0},uW:{value:0}};
+const FIN='\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n';
+function mkPts(n,fill){const pos=new Float32Array(n*3),sd=new Float32Array(n),st=new Float32Array(n);
+  for(let i=0;i<n;i++){const o=fill(i);pos[i*3]=o[0];pos[i*3+1]=o[1];pos[i*3+2]=o[2];st[i]=o[3]||0;sd[i]=Math.random();}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('aSeed',new THREE.BufferAttribute(sd,1));g.setAttribute('aStart',new THREE.BufferAttribute(st,1));return g;}
+const addPts=(g,m)=>{const o=new THREE.Points(g,m);o.frustumCulled=false;scene.add(o);return o;};
+// Polvo flotando (la mitad dentro del cono de la lámpara)
+const dustMat=new THREE.ShaderMaterial({uniforms:{...PU,uSize:{value:.012},uCol:{value:C(0xffd9a0)},uOp:{value:.8}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+  vertexShader:`uniform float uTime,uScale,uSize;attribute float aSeed;varying float vA;
+    void main(){vec3 p=position;float h=fract((p.y-.7)/1.4+uTime*(.006+.012*aSeed));p.y=.7+h*1.4;
+      p.x+=sin(uTime*.5+aSeed*40.)*.06;p.z+=cos(uTime*.4+aSeed*31.)*.06;
+      vec4 mv=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;gl_PointSize=max(1.,uSize*uScale/-mv.z*(.6+.9*aSeed));
+      vA=smoothstep(0.,.12,h)*(1.-smoothstep(.85,1.,h))*(.55+.45*sin(uTime*1.7+aSeed*60.));}`,
+  fragmentShader:`uniform vec3 uCol;uniform float uOp;varying float vA;
+    void main(){float r=length(gl_PointCoord-.5)*2.;float a=(1.-smoothstep(.2,1.,r))*vA*uOp;if(a<.01)discard;gl_FragColor=vec4(uCol,a);${FIN}}`});
+addPts(mkPts(420,i=>i%2?[rr(-1.6,1.6),rr(.7,2),rr(-1,1.6)]:[rr(-.95,-.15),rr(.75,1.45),rr(-.1,.5)]),dustMat);
+// Chispas/ceniza azul que suben al disolverse cada pila de papel
+const sparkMat=new THREE.ShaderMaterial({uniforms:{...PU,uSize:{value:.017}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+  vertexShader:`uniform float uTime,uScale,uSize,uP;attribute float aSeed;attribute float aStart;varying float vA;varying float vH;
+    void main(){float k=clamp((uP-aStart)/.34,0.,1.);float s2=fract(aSeed*7.31),s3=fract(aSeed*13.7);
+      vec3 p=position;p.y+=k*(.25+.9*s2);p.x+=sin(k*5.+aSeed*50.)*.1*k+(s3-.5)*.25*k;p.z+=cos(k*4.+aSeed*37.)*.1*k;
+      vec4 mv=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;
+      vA=sin(3.14159*k)*(.6+.4*sin(uTime*9.+aSeed*100.));vH=s3;
+      gl_PointSize=max(1.,uSize*uScale/-mv.z*(.5+s2)*(1.-.5*k));}`,
+  fragmentShader:`varying float vA;varying float vH;
+    void main(){float r=length(gl_PointCoord-.5)*2.;float a=1.-smoothstep(0.,1.,r);a*=a*vA;if(a<.01)discard;
+      gl_FragColor=vec4(mix(vec3(.45,.7,1.),vec3(1.,.95,.85),vH)*1.6,a);${FIN}}`});
+addPts(mkPts(700,i=>{const s=stackSrc[i%stackSrc.length];return [s.x+rr(-.15,.15),TOP+rr(0,.25),s.z+rr(-.1,.1),s.d0+rr(0,.3)];}),sparkMat);
+// Vapor del café
+const steamMat=new THREE.ShaderMaterial({uniforms:{...PU,uSize:{value:.07}},transparent:true,depthWrite:false,
+  vertexShader:`uniform float uTime,uScale,uSize,uW;attribute float aSeed;varying float vA;
+    void main(){float h=fract(uTime*.12+aSeed);vec3 p=position;p.y+=h*.2;p.x+=sin(h*7.+aSeed*30.)*.012*h;p.z+=cos(h*6.+aSeed*20.)*.01*h;
+      vec4 mv=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;gl_PointSize=max(1.,uSize*uScale/-mv.z*(.5+h*1.8));
+      vA=sin(3.14159*h)*.2*(1.-uW);}`,
+  fragmentShader:`varying float vA;void main(){float r=length(gl_PointCoord-.5)*2.;float a=(1.-smoothstep(0.,1.,r))*vA;if(a<.005)discard;gl_FragColor=vec4(1.,.95,.9,a);${FIN}}`});
+addPts(mkPts(26,()=>[.95+rr(-.02,.02),TOP+.095,.1+rr(-.02,.02)]),steamMat);
+// Hojas sueltas volando (1 draw call, animadas en GPU)
+const FN=18,fpg=new THREE.PlaneGeometry(.1,.07),fg=new THREE.InstancedBufferGeometry();
+fg.index=fpg.index;fg.attributes.position=fpg.attributes.position;fg.attributes.uv=fpg.attributes.uv;fg.instanceCount=FN;
+{const o=new Float32Array(FN*3),q=new Float32Array(FN*3);for(let i=0;i<FN;i++){o.set([rr(-1,1),TOP+.1,rr(-.2,.6)],i*3);q.set([rr(.4,1.2),rr(0,6),rr(.2,.55)],i*3);}
+  fg.setAttribute('aO',new THREE.InstancedBufferAttribute(o,3));fg.setAttribute('aP',new THREE.InstancedBufferAttribute(q,3));}
+const flyMat=new THREE.ShaderMaterial({uniforms:{uTime:U.uTime,uFl:{value:0},uCol:{value:C(0xf3eee2)}},transparent:true,depthWrite:false,side:THREE.DoubleSide,
+  vertexShader:`uniform float uTime,uFl;attribute vec3 aO;attribute vec3 aP;varying float vA;varying vec2 vUv;
+    mat3 rx(float a){float c=cos(a),s=sin(a);return mat3(1.,0.,0.,0.,c,s,0.,-s,c);}
+    mat3 ry(float a){float c=cos(a),s=sin(a);return mat3(c,0.,-s,0.,1.,0.,s,0.,c);}
+    void main(){vUv=uv;float sp=aP.x,r=aP.y;vA=sin(3.14159*clamp(uFl*1.2-aP.z*.4,0.,1.))*step(uFl,.999);
+      vec3 w=aO+ry(uTime+r)*rx(uTime*sp+r)*position;w.y+=uFl*sp*1.4;w.x+=sin(uTime*2.+r)*.04;w.z+=cos(uTime*1.7+r)*.03;
+      gl_Position=projectionMatrix*viewMatrix*vec4(w,1.);}`,
+  fragmentShader:`uniform vec3 uCol;varying float vA;varying vec2 vUv;
+    void main(){if(vA<.01)discard;float ln=step(.55,fract(vUv.y*9.))*.07;vec3 c=uCol*(1.-ln);
+      float e=1.-smoothstep(0.,.08,min(min(vUv.x,1.-vUv.x),min(vUv.y,1.-vUv.y)));c+=e*vec3(.15,.3,.6)*.5;
+      gl_FragColor=vec4(c,vA);${FIN}}`});
+{const fm=new THREE.Mesh(fg,flyMat);fm.frustumCulled=false;scene.add(fm);}
+
+/* ================= 10b. CAPTURAS: pantalla del monitor (cargadas desde ImageKit) ================= */
+const SHOT_ALL = [
+  'https://ik.imagekit.io/ferds/PROGRAMA%20CONTABLE/01-intro.png',
+  'https://ik.imagekit.io/ferds/PROGRAMA%20CONTABLE/02-tablero-claro.png',
+  'https://ik.imagekit.io/ferds/PROGRAMA%20CONTABLE/03-resumen-empresa.png',
+  'https://ik.imagekit.io/ferds/PROGRAMA%20CONTABLE/04-facturas-carpetas.png',
+  'https://ik.imagekit.io/ferds/PROGRAMA%20CONTABLE/05-facturas-mes.png',
+  'https://ik.imagekit.io/ferds/PROGRAMA%20CONTABLE/06-libro-diario.png',
+  'https://ik.imagekit.io/ferds/PROGRAMA%20CONTABLE/07-asientos.png',
+  'https://ik.imagekit.io/ferds/PROGRAMA%20CONTABLE/08-plan-cuentas.png',
+  'https://ik.imagekit.io/ferds/PROGRAMA%20CONTABLE/09-proveedores.png',
+  'https://ik.imagekit.io/ferds/PROGRAMA%20CONTABLE/10-retenciones.png',
+  'https://ik.imagekit.io/ferds/PROGRAMA%20CONTABLE/11-reportes.png',
+  'https://ik.imagekit.io/ferds/PROGRAMA%20CONTABLE/12-nueva-factura.png',
+  'https://ik.imagekit.io/ferds/PROGRAMA%20CONTABLE/13-cargando.png',
+];
+const SLIDE=2.5,FADE=.45;                              // 2.5 s por imagen, 0.45 s de transición
+const shotTex=[];let loaded=0,kSv=0,scrT0=-1;
+const texLoader=new THREE.TextureLoader();
+texLoader.setCrossOrigin('anonymous');
+SHOT_ALL.forEach((src,idx)=>{
+  texLoader.load(
+    src,
+    (tex)=>{
+      tex.colorSpace=THREE.SRGBColorSpace;
+      tex.anisotropy=8;
+      // Ajuste tipo "cover" horizontal: centrado, sin estirar de más
+      const img=tex.image;
+      if(img && img.width && img.height){
+        const targetAspect=1600/900, imgAspect=img.width/img.height;
+        if(imgAspect>targetAspect){
+          const s=targetAspect/imgAspect;
+          tex.repeat.set(s,1); tex.offset.set((1-s)/2,0);
+        }else{
+          const s=imgAspect/targetAspect;
+          tex.repeat.set(1,s); tex.offset.set(0,(1-s)/2);
+        }
+      }
+      shotTex[idx]=tex; loaded++;
+    },
+    undefined,
+    (err)=>console.warn('No se pudo cargar captura:',src,err)
+  );
+});
+function updateScreen(t){
+  if(kSv<=0.001){scrT0=-1;return;}
+  if(loaded<SHOT_ALL.length)return;
+  if(scrT0<0)scrT0=t;
+  const s=(t-scrT0)/SLIDE,i=Math.floor(s),f=s-i,fr=FADE/SLIDE,n=SHOT_ALL.length,u=scrMat.uniforms;
+  const a=shotTex[i%n], b=shotTex[(i+1)%n];
+  if(!a||!b)return;
+  u.mapB.value=a; u.mapC.value=b; u.uC.value=f>1-fr?smooth((f-(1-fr))/fr):0;
+}
+
+/* ================= 11. CÁMARA POR KEYFRAMES ================= */
+// Inicia frontal y algo baja, hace dolly+orbit+pan, se acerca al monitor y termina en plano frontal limpio.
+const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+const camPath=new THREE.CatmullRomCurve3([V(0.1,0.92,2.2),V(1.0,1.05,1.7),V(-0.6,1.2,1.25),V(0.1,1.28,0.85),V(0,1.36,1.8)]);
+const lookPath=new THREE.CatmullRomCurve3([V(0,1.0,-0.2),V(-0.3,0.95,0),V(0.3,1.0,-0.1),V(0,1.22,-0.4),V(0,0.98,-0.4)]);
+
+/* ================= 12. TEXTOS (HTML) ================= */
+const T=[['t1',-.01,0,.12,.17],['t2',.18,.22,.42,.47],['t3',.58,.62,.78,.83],['t4',.88,.92,1.01,1.02]];
+const els=T.map(t=>document.getElementById(t[0]));
+const kids=els.map(e=>[...e.querySelectorAll('[data-s]')]);
+const shade=document.getElementById('shade'),shade4=document.getElementById('shade4'),cta=document.getElementById('cta');
+const bar=document.getElementById('bar'),hint=document.getElementById('hint'),dof=document.getElementById('dof');
+
+/* ================= 13. BUCLE ================= */
+let target=0,cur=0,lastP=-1,fpsAcc=0,fpsN=0,fpsWin=0;
+const cW=C(0xffb070),cC=C(0xe6eeff),bgW=C(0x2a1a14),bgC=C(0xdbe4ef),wlW=C(0x8a6a4a),wlC=C(0xe4eaf2),winW=C(0xffd9a8),winC=C(0xcfe0ff);
+const fogW=C(0x2a1a14),fogC=C(0xcfd9e6),aW=C(0x7fa0e0),aC=C(0xb4ccff),bulbW=C(0xffe2a8),bulbC=C(0xb9a98a),dustW=C(0xffd9a0),dustC=C(0xaac8ff);
+const camBase=new THREE.Vector3(),lookBase=new THREE.Vector3(),capO=[-1,-1,-1,-1];
+addEventListener('scroll',()=>{target=scrollY/(document.body.scrollHeight-innerHeight)||0;},{passive:true});
+function applySize(){renderer.setPixelRatio(dpr);renderer.setSize(innerWidth,innerHeight);PU.uScale.value=renderer.domElement.height*.5;}
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();applySize();});
+applySize();
+const clock=new THREE.Clock();
+function frame(){
+  requestAnimationFrame(frame);
+  const raw=clock.getDelta(),dt=Math.min(raw,.1),t=clock.elapsedTime;
+  U.uTime.value=t;
+  // Resolución adaptativa: si el promedio baja de ~38 fps reduce píxeles; si hay holgura, los recupera
+  if(raw<.25){fpsAcc+=raw;fpsN++;if(fpsN>=40){const avg=fpsAcc/fpsN;fpsAcc=0;fpsN=0;fpsWin++;
+    if(fpsWin>2){if(avg>.026&&dpr>.7){dpr=Math.max(.7,dpr-.15);applySize();}else if(avg<.0185&&dpr<DPR_MAX){dpr=Math.min(DPR_MAX,dpr+.1);applySize();}}}}
+  const diff=target-cur;cur=Math.abs(diff)<1e-5?target:cur+diff*(1-Math.exp(-dt*5));
+  const p=cur;
+  if(Math.abs(p-lastP)>1e-6){                                   // todo lo pesado solo corre cuando el scroll se mueve
+    lastP=p;const u=smooth(clamp(p));
+    camBase.copy(camPath.getPoint(u));lookBase.copy(lookPath.getPoint(u));
+    let dirty=false;
+    for(const c of items)if(updateItem(c,p)){c.G.dirty=dirty=true;}
+    if(dirty){for(const G of groups)if(G.dirty){G.im.instanceMatrix.needsUpdate=true;G.dis.needsUpdate=true;G.dirty=false;}renderer.shadowMap.needsUpdate=true;}
+    const kS=range(p,0.3,0.7);scrMat.uniforms.uK.value=kS;kSv=kS;screenLight.intensity=1.5*kS;
+    const w=smooth(range(p,0.35,0.95));
+    sun.color.lerpColors(cW,cC,w);sun.intensity=1.2+0.9*w;
+    amb.color.lerpColors(aW,aC,w);amb.intensity=0.3+0.5*w;hemi.intensity=0.35+0.35*w;
+    lampLight.intensity=40*(1-0.9*w);
+    scene.background.lerpColors(bgW,bgC,w);scene.fog.color.lerpColors(fogW,fogC,w);scene.fog.density=0.22-0.15*w;
+    wallMat.color.lerpColors(wlW,wlC,w);winMat.color.lerpColors(winW,winC,w);
+    scene.environmentIntensity=0.25+0.5*w;renderer.toneMappingExposure=0.95+0.2*w;
+    bulb.material.color.lerpColors(bulbW,bulbC,w);
+    glow.material.opacity=1-.92*w;coneMat.uniforms.uI.value=.9*(1-.92*w);
+    PU.uP.value=p;PU.uW.value=w;flyMat.uniforms.uFl.value=range(p,0.1,0.65);
+    dustMat.uniforms.uCol.value.lerpColors(dustW,dustC,w);dustMat.uniforms.uOp.value=.8*(1-range(p,0.4,0.9));
+    T.forEach((s,i)=>{const o=smooth(range(p,s[1],s[2]))*(1-smooth(range(p,s[3],s[4])));
+      if(o!==capO[i]){capO[i]=o;kids[i].forEach((k,j)=>{const a=smooth(clamp(o*1.8-j*0.22));k.style.opacity=a;k.style.transform=`translateY(${(1-a)*22}px)`;});}});
+    shade.style.opacity=Math.max(capO[0],capO[1],capO[2]);shade4.style.opacity=capO[3];cta.style.pointerEvents=capO[3]>.5?'auto':'none';
+    dof.style.opacity=range(p,0.85,1);bar.style.width=(p*100)+'%';hint.style.opacity=0.7*(1-range(p,0,0.05));
+  }
+  camera.position.copy(camBase);camera.position.y+=Math.sin(t*.5)*.004;camera.lookAt(lookBase);
+  scrMat.uniforms.uT.value=t;
+  const d=new Date(),sc=d.getSeconds()+d.getMilliseconds()/1000,mn=d.getMinutes()+sc/60,hr=(d.getHours()%12)+mn/60;
+  hands.s.rotation.z=-sc/60*6.2832;hands.m.rotation.z=-mn/60*6.2832;hands.h.rotation.z=-hr/12*6.2832;
+  updateScreen(t);
+  renderer.render(scene,camera);
+}
+frame();
+</script>
+</body>
+</html>
